@@ -30,6 +30,10 @@ def process_price(text):
     match = re.search('\\d+,\\d+', text)
     return text[match.start(): match.end()].replace(",", ".")
 
+def process_discount(text):
+    match = re.search('\\b\\d+\\%', text)
+    return text[match.start(): match.end()].replace(",", ".")
+
 
 def process_brand(text):
     text = preprocess_str(text)
