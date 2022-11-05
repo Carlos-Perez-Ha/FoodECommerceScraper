@@ -1,11 +1,17 @@
-import xml.etree.ElementTree as ET
 import re
+import datetime
+import os
+import json
 
 
-def parseXML(xmlfile):
-    tree = ET.parse(xmlfile)
-    root = tree.getroot()
-    pass
+def create_data_folder():
+    today = str(datetime.date.today()).replace('-', '')
+    data_path = os.path.join(os.getcwd(), 'data', today)
+    os.makedirs(os.path.join(data_path, 'tmp'), exist_ok=True)
+    return data_path
+
+
+
 
 
 def preprocess_str(text):
@@ -22,6 +28,10 @@ def process_unit_price(text):
 
 def process_price(text):
     match = re.search('\\d+,\\d+', text)
+    return text[match.start(): match.end()].replace(",", ".")
+
+def process_discount(text):
+    match = re.search('\\b\\d+\\%', text)
     return text[match.start(): match.end()].replace(",", ".")
 
 
