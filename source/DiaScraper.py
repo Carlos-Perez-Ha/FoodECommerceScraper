@@ -14,7 +14,8 @@ class DiaScraper:
     Objeto para descargar información de la pagina de DIA
     """
 
-    __URLSiteMap = 'https://www.dia.es/sitemap.xml'
+    __URLSiteMap = '/sitemap.xml'
+    __URLSite = 'https://www.dia.es'
 
     __headers = {
         "User-Agent": 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
@@ -103,20 +104,43 @@ class DiaScraper:
         :return:
         """
 
-        sitemap = self.__get_xml_page(self.__URLSiteMap)
+        sitemap = self.__get_xml_page(self.__URLSite+self.__URLSiteMap)
 
         paginas_producto = sitemap.find_all("loc", string=re.compile('.+/p/\d+'))
 
         for p in paginas_producto:
             self.listaPaginasProducto.append(p.string)
-P
+
     def cargar_paginas_producto_autonomo(self):
 
         home = self.__get_html_page("https://www.dia.es/compra-online/")
 
-        s = home.find("ul", class_="categories-list")
+        # Busco todos los tags que hacen referencia a categorías de producto
+        categories_list_tags = home.find_all("a", class_="go-to-category")
+
+        # Recorro todas las categorias de productos
+        for categoria_tag in categories_list_tags:
+
+            url_catetoria = categoria_tag["href"]
+
+            pagina_categoria = self.__get_html_page(self.__URLSite + url_catetoria)
+
+            # self.__print_page(pagina_categoria, pagina_categoria.title.string.strip()+".html")
+
+            # Busco todos los tags que hacen referencia a enlaces a Producto
+            product_main_link_tags = pagina_categoria.find_all("a", class_="productMainLink")
+
+            # Recorro todos los tags de enlace a Producto
+            for producto_tag in product_main_link_tags:
+
+                url_producto = producto_tag["href"]
+
+                self.listaPaginasProducto.append(self.__URLSite + url_producto)
 
         self.__print_page(home, "home.html")
+
+        # self.__print_page(pagina_producto, "pagina_producto.html")
+
 
     def __get_info_from_url(self, url: str) -> dict:
         page = self.__get_html_page(url)
