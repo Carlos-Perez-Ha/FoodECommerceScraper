@@ -109,6 +109,14 @@ class DiaScraper:
 
         for p in paginas_producto:
             self.listaPaginasProducto.append(p.string)
+P
+    def cargar_paginas_producto_autonomo(self):
+
+        home = self.__get_html_page("https://www.dia.es/compra-online/")
+
+        s = home.find("ul", class_="categories-list")
+
+        self.__print_page(home, "home.html")
 
     def __get_info_from_url(self, url: str) -> dict:
         page = self.__get_html_page(url)
@@ -169,3 +177,8 @@ class DiaScraper:
 
         self.__parse_results()
         return results
+
+
+if __name__=="__main__":
+    diaScraper = DiaScraper()
+    diaScraper.cargar_paginas_producto_autonomo()
