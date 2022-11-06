@@ -7,6 +7,7 @@ from typing import Tuple, List
 import hashlib
 import glob
 import shutil
+import time
 
 
 class DiaScraper:
@@ -37,6 +38,8 @@ class DiaScraper:
         """
 
         session = requests.Session()
+        # Se simula navegacion humana, con retraso de 1 segundo entre llamadas
+        time.sleep(1)
         page = session.get(url, headers=self.__headers)
         soup = BeautifulSoup(page.content, features='xml')
 
@@ -49,6 +52,8 @@ class DiaScraper:
         """
 
         session = requests.Session()
+        # Se simula navegacion humana, con retraso de 1 segundo entre llamadas
+        time.sleep(1)
         page = session.get(url, headers=self.__headers)
         soup = BeautifulSoup(page.content, features='html.parser')
 
