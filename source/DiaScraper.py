@@ -146,6 +146,12 @@ class DiaScraper:
 
         # self.__print_page(pagina_producto, "pagina_producto.html")
 
+    @staticmethod
+    def __get_number_of_pages(category_page: bs4.BeautifulSoup):
+
+
+
+        pass
 
     def __get_info_from_url(self, url: str) -> dict:
         page = self.__get_html_page(url)
