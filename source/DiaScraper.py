@@ -17,6 +17,7 @@ class DiaScraper:
 
     __URLSiteMap = '/sitemap.xml'
     __URLSite = 'https://www.dia.es'
+    __URLCompreOnline = 'https://www.dia.es/compra-online/'
 
     __headers = {
         "User-Agent": 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
@@ -118,7 +119,7 @@ class DiaScraper:
 
     def cargar_paginas_producto_autonomo(self):
 
-        home = self.__get_html_page("https://www.dia.es/compra-online/")
+        home = self.__get_html_page(self.__URLCompreOnline)
 
         # Busco todos los tags que hacen referencia a categorías de producto
         categories_list_tags = home.find_all("a", class_="go-to-category")
@@ -132,26 +133,68 @@ class DiaScraper:
 
             # self.__print_page(pagina_categoria, pagina_categoria.title.string.strip()+".html")
 
-            # Busco todos los tags que hacen referencia a enlaces a Producto
-            product_main_link_tags = pagina_categoria.find_all("a", class_="productMainLink")
+            # Obtengo las paginas de productos de la categoria
+            pagination = self.__obtein_pagination_2(pagina_categoria)
 
-            # Recorro todos los tags de enlace a Producto
-            for producto_tag in product_main_link_tags:
+            # Para cada pagina de producto
+            for products_page in pagination:
 
-                url_producto = producto_tag["href"]
+                # Salto a la pagina que toque. La primera vez no salto y escaneo
+                if products_page != "":
+                    pagina_categoria = self.__get_html_page(self.__URLSite + products_page)
 
-                self.listaPaginasProducto.append(self.__URLSite + url_producto)
+                logging.info("Escaneando pagina: " + pagina_categoria.title.string.strip())
+
+                # Busco todos los tags que hacen referencia a enlaces a Producto
+                product_main_link_tags = pagina_categoria.find_all("a", class_="productMainLink")
+
+                logging.info("Numero de productos: " + str(len(product_main_link_tags)))
+
+                # Recorro todos los tags de enlace a Producto
+                for producto_tag in product_main_link_tags:
+
+                    url_producto = producto_tag["href"]
+
+                    self.listaPaginasProducto.append(self.__URLSite + url_producto)
 
         self.__print_page(home, "home.html")
 
         # self.__print_page(pagina_producto, "pagina_producto.html")
 
     @staticmethod
-    def __get_number_of_pages(category_page: bs4.BeautifulSoup):
+    def __obtein_pagination(category_page: bs4.BeautifulSoup) -> List[str]:
 
+        paginator_bottom = category_page.find("div", class_="paginatorBottom")
 
+        pagination_list = paginator_bottom.find("select", class_="pagination-list")
 
-        pass
+        options = pagination_list.find_all("option")
+
+        urls_paginacion = []
+
+        for option_pagina in options:
+
+            url_paginacion = option_pagina["value"]
+
+            urls_paginacion.append(url_paginacion)
+
+        return urls_paginacion
+
+    @staticmethod
+    def __obtein_pagination_2(category_page: bs4.BeautifulSoup) -> List[str]:
+
+        paginator_bottom = category_page.find("div", class_="paginatorBottom")
+
+        pagination_list = paginator_bottom.find("div", class_="pagination-list-and-total")
+
+        span = str(pagination_list.span.string)
+
+        numb = re.search('\d', span)
+
+        print(numb)
+
+        return None
+
 
     def __get_info_from_url(self, url: str) -> dict:
         page = self.__get_html_page(url)
