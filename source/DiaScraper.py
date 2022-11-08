@@ -124,8 +124,15 @@ class DiaScraper:
         # Busco todos los tags que hacen referencia a categorías de producto
         categories_list_tags = home.find_all("a", class_="go-to-category")
 
+        i = 0
+
         # Recorro todas las categorias de productos
         for categoria_tag in categories_list_tags:
+
+            i += 1
+
+            if i == 3:
+                break
 
             url_catetoria = categoria_tag["href"]
 
@@ -134,7 +141,7 @@ class DiaScraper:
             # self.__print_page(pagina_categoria, pagina_categoria.title.string.strip()+".html")
 
             # Obtengo las paginas de productos de la categoria
-            pagination = self.__obtein_pagination_2(pagina_categoria)
+            pagination = self.__obtein_pagination(pagina_categoria, url_catetoria)
 
             # Para cada pagina de producto
             for products_page in pagination:
@@ -143,7 +150,7 @@ class DiaScraper:
                 if products_page != "":
                     pagina_categoria = self.__get_html_page(self.__URLSite + products_page)
 
-                logging.info("Escaneando pagina: " + pagina_categoria.title.string.strip())
+                logging.info("Escaneando pagina: " + products_page)
 
                 # Busco todos los tags que hacen referencia a enlaces a Producto
                 product_main_link_tags = pagina_categoria.find_all("a", class_="productMainLink")
@@ -157,44 +164,41 @@ class DiaScraper:
 
                     self.listaPaginasProducto.append(self.__URLSite + url_producto)
 
-        self.__print_page(home, "home.html")
-
-        # self.__print_page(pagina_producto, "pagina_producto.html")
-
     @staticmethod
-    def __obtein_pagination(category_page: bs4.BeautifulSoup) -> List[str]:
+    def __obtein_pagination(category_page: bs4.BeautifulSoup, categoria_url: str) -> List[str]:
+        """
+        Devuelve todas las urls de las paginas de la categoria, segun la peginación que encuentre.
+        Busca la etiqueta "scan" que contiene el numero máximo de páginas y construye todas
+        las URLs para llamarlas.
+        :param category_page: pagina de la categoria
+        :param categoria_url: url de la pagina de la categoria
+        :return:
+        """
 
         paginator_bottom = category_page.find("div", class_="paginatorBottom")
 
-        pagination_list = paginator_bottom.find("select", class_="pagination-list")
-
-        options = pagination_list.find_all("option")
-
-        urls_paginacion = []
-
-        for option_pagina in options:
-
-            url_paginacion = option_pagina["value"]
-
-            urls_paginacion.append(url_paginacion)
-
-        return urls_paginacion
-
-    @staticmethod
-    def __obtein_pagination_2(category_page: bs4.BeautifulSoup) -> List[str]:
-
-        paginator_bottom = category_page.find("div", class_="paginatorBottom")
-
+        # navegamos hasta la paginacion
         pagination_list = paginator_bottom.find("div", class_="pagination-list-and-total")
 
+        # obtenemos el span con el texto "de X" siendo X el numero maximno de paginas, por ejemplo "de 21"
         span = str(pagination_list.span.string)
 
-        numb = re.search('\d', span)
+        # Sacamos el numero decimal del texto
+        numb = int(re.search('\d+', span).group())
 
-        print(numb)
+        lista_paginas = []
 
-        return None
+        # Construimos las paginas de navegacion
+        for n in range(numb):
 
+            # la primera pagina no tiene paginacion
+            if n == 0:
+                lista_paginas.append(categoria_url)
+            else:
+                url_paginacion = categoria_url + "?page" + str(n)
+                lista_paginas.append(url_paginacion)
+
+        return lista_paginas
 
     def __get_info_from_url(self, url: str) -> dict:
         page = self.__get_html_page(url)
@@ -260,3 +264,7 @@ class DiaScraper:
 if __name__=="__main__":
     diaScraper = DiaScraper()
     diaScraper.cargar_paginas_producto_autonomo()
+
+    with open("lista.csv", "w") as f:
+        for url in diaScraper.listaPaginasProducto:
+            f.write(url+"\n")
