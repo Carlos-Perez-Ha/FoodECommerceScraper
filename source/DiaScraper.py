@@ -120,6 +120,12 @@ class DiaScraper:
             self.listaPaginasProducto.append(p.string)
 
     def __cargar_paginas_producto_autonomo_con_opcion(self, reload: bool):
+        """
+        Carga las paginas de producto con navegacion autonomo.
+
+        :param reload: True si geremos volver a lanzar el escaneo online.
+            False si queremos cargar los productos del fichero csv cacheado (PRODUCTS_CSV_FILE))
+        """
 
         if reload:
             self.__cargar_paginas_producto_autonomo()
@@ -140,7 +146,6 @@ class DiaScraper:
         """
         Carga la lista de productos navegando por el menú de catalogo de productos
         y por la paginación de cada categoría.
-        :return:
         """
 
         home = self.__get_html_page(self.URLCompreOnline)
