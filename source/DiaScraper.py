@@ -15,11 +15,13 @@ class DiaScraper:
     Objeto para descargar información de la pagina de DIA
     """
 
-    __URLSiteMap = '/sitemap.xml'
-    __URLSite = 'https://www.dia.es'
-    __URLCompreOnline = 'https://www.dia.es/compra-online/'
+    URLSiteMap = '/sitemap.xml'
+    URLSite = 'https://www.dia.es'
+    URLCompreOnline = 'https://www.dia.es/compra-online/'
 
-    __headers = {
+    PRODUCTS_CSV_FILE = "products_list.csv"
+
+    HEADERS = {
         "User-Agent": 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
                       'Chrome/107.0.0.0 Safari/537.36 '
     }
@@ -41,7 +43,7 @@ class DiaScraper:
         session = requests.Session()
         # Se simula navegacion humana, con retraso de 1 segundo entre llamadas
         time.sleep(1)
-        page = session.get(url, headers=self.__headers)
+        page = session.get(url, headers=self.HEADERS)
         soup = BeautifulSoup(page.content, features='xml')
 
         return soup
@@ -55,7 +57,7 @@ class DiaScraper:
         session = requests.Session()
         # Se simula navegacion humana, con retraso de 1 segundo entre llamadas
         time.sleep(1)
-        page = session.get(url, headers=self.__headers)
+        page = session.get(url, headers=self.HEADERS)
         soup = BeautifulSoup(page.content, features='html.parser')
 
         return soup
@@ -110,16 +112,38 @@ class DiaScraper:
         :return:
         """
 
-        sitemap = self.__get_xml_page(self.__URLSite+self.__URLSiteMap)
+        sitemap = self.__get_xml_page(self.URLSite + self.URLSiteMap)
 
         paginas_producto = sitemap.find_all("loc", string=re.compile('.+/p/\d+'))
 
         for p in paginas_producto:
             self.listaPaginasProducto.append(p.string)
 
-    def cargar_paginas_producto_autonomo(self):
+    def __cargar_paginas_producto_autonomo_con_opcion(self, reload: bool):
 
-        home = self.__get_html_page(self.__URLCompreOnline)
+        if reload:
+            self.__cargar_paginas_producto_autonomo()
+        else:
+            self.__read_products_from_csv()
+
+    def __read_products_from_csv(self):
+        with open(self.PRODUCTS_CSV_FILE, "r") as f:
+            for url in f:
+                self.listaPaginasProducto.append(url.strip())
+
+    def __write_products_to_csv(self):
+        with open(self.PRODUCTS_CSV_FILE, "w") as f:
+            for url in self.listaPaginasProducto:
+                f.write(url + "\n")
+
+    def __cargar_paginas_producto_autonomo(self):
+        """
+        Carga la lista de productos navegando por el menú de catalogo de productos
+        y por la paginación de cada categoría.
+        :return:
+        """
+
+        home = self.__get_html_page(self.URLCompreOnline)
 
         # Busco todos los tags que hacen referencia a categorías de producto
         categories_list_tags = home.find_all("a", class_="go-to-category")
@@ -129,9 +153,9 @@ class DiaScraper:
 
             url_catetoria = categoria_tag["href"]
 
-            pagina_categoria = self.__get_html_page(self.__URLSite + url_catetoria)
+            pagina_categoria = self.__get_html_page(self.URLSite + url_catetoria)
 
-            self.__print_page(pagina_categoria, pagina_categoria.title.string.strip()+".html")
+            # self.__print_page(pagina_categoria, pagina_categoria.title.string.strip()+".html")
 
             # Obtengo las paginas de productos de la categoria
             pagination = self.__obtein_pagination(pagina_categoria, url_catetoria)
@@ -139,7 +163,7 @@ class DiaScraper:
             # Para cada pagina de producto
             for products_page in pagination:
 
-                pagina_categoria = self.__get_html_page(self.__URLSite + products_page)
+                pagina_categoria = self.__get_html_page(self.URLSite + products_page)
 
                 logging.info("Escaneando pagina: " + products_page)
 
@@ -153,7 +177,10 @@ class DiaScraper:
 
                     url_producto = producto_tag["href"]
 
-                    self.listaPaginasProducto.append(self.__URLSite + url_producto)
+                    self.listaPaginasProducto.append(self.URLSite + url_producto)
+
+        # Guardamos los productos en fichero para caché
+        self.__write_products_to_csv()
 
     @staticmethod
     def __obtein_pagination(category_page: bs4.BeautifulSoup, categoria_url: str) -> List[str]:
@@ -220,16 +247,14 @@ class DiaScraper:
             json.dump(out, outfile, ensure_ascii=False)
             shutil.rmtree(os.path.join(self.data_path, 'tmp'))
 
-    def start_scraping(self):
+    def start_scraping(self, reload: bool):
         """
         Funciona principal que realiza el proceso de scraping
         :return:
         """
         results = []
 
-        self.__cargar_paginas_producto()
-
-        i = 1
+        self.__cargar_paginas_producto_autonomo_con_opcion(reload)
 
         for product_url in self.listaPaginasProducto:
             # TODO: Manage exceptions. Errors should not affect any more field than the one that fails.
@@ -243,19 +268,6 @@ class DiaScraper:
                 logging.warning(f"{product_url} failed. No information retrieved.")  # , e)
                 logging.info(e)
 
-            i += 1
-
-            if i == 10 :
-                break
-
         self.__parse_results()
         return results
 
-
-if __name__ == "__main__":
-    diaScraper = DiaScraper()
-    diaScraper.cargar_paginas_producto_autonomo()
-
-    with open("lista.csv", "w") as f:
-        for url in diaScraper.listaPaginasProducto:
-            f.write(url+"\n")
