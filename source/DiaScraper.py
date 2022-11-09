@@ -124,21 +124,14 @@ class DiaScraper:
         # Busco todos los tags que hacen referencia a categorías de producto
         categories_list_tags = home.find_all("a", class_="go-to-category")
 
-        i = 0
-
         # Recorro todas las categorias de productos
         for categoria_tag in categories_list_tags:
-
-            i += 1
-
-            if i == 3:
-                break
 
             url_catetoria = categoria_tag["href"]
 
             pagina_categoria = self.__get_html_page(self.__URLSite + url_catetoria)
 
-            # self.__print_page(pagina_categoria, pagina_categoria.title.string.strip()+".html")
+            self.__print_page(pagina_categoria, pagina_categoria.title.string.strip()+".html")
 
             # Obtengo las paginas de productos de la categoria
             pagination = self.__obtein_pagination(pagina_categoria, url_catetoria)
@@ -146,9 +139,7 @@ class DiaScraper:
             # Para cada pagina de producto
             for products_page in pagination:
 
-                # Salto a la pagina que toque. La primera vez no salto y escaneo
-                if products_page != "":
-                    pagina_categoria = self.__get_html_page(self.__URLSite + products_page)
+                pagina_categoria = self.__get_html_page(self.__URLSite + products_page)
 
                 logging.info("Escaneando pagina: " + products_page)
 
@@ -195,7 +186,7 @@ class DiaScraper:
             if n == 0:
                 lista_paginas.append(categoria_url)
             else:
-                url_paginacion = categoria_url + "?page" + str(n)
+                url_paginacion = categoria_url + "?page=" + str(n)
                 lista_paginas.append(url_paginacion)
 
         return lista_paginas
@@ -243,7 +234,7 @@ class DiaScraper:
         for product_url in self.listaPaginasProducto:
             # TODO: Manage exceptions. Errors should not affect any more field than the one that fails.
             # Poner sleep en ejecuciones reales para evitar bloqueos y saturaciones del servidor.
-            # time.sleep(1)
+            # time.sleep(1) <-- hecho en get_page
             try:
                 record = self.__get_info_from_url(product_url)
                 self.__save_record(record, record["product"])
@@ -261,7 +252,7 @@ class DiaScraper:
         return results
 
 
-if __name__=="__main__":
+if __name__ == "__main__":
     diaScraper = DiaScraper()
     diaScraper.cargar_paginas_producto_autonomo()
 
