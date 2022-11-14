@@ -8,6 +8,7 @@ import hashlib
 import glob
 import shutil
 import time
+import sys
 
 
 class DiaScraper:
@@ -20,13 +21,18 @@ class DiaScraper:
     URLCompreOnline = 'https://www.dia.es/compra-online/'
 
     PRODUCTS_CSV_FILE = "products_list.csv"
+    LOG_FILE = os.path.join('..', 'logs', 'logs.log')
 
     HEADERS = {
         "User-Agent": 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
                       'Chrome/107.0.0.0 Safari/537.36 '
     }
 
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s",
+                        handlers=[
+                            logging.FileHandler(LOG_FILE),
+                            logging.StreamHandler(sys.stdout)
+                        ])
 
     def __init__(self):
 
@@ -243,6 +249,8 @@ class DiaScraper:
         unit_price, units = self.__obtain_price_per_unit(page)
         categories = self.__obtain_categories(page)
         discount = self.__obtain_discount(page)
+        if any([price is None, product is None, brand is None, unit_price is None, units is None]):
+            logging.warning(f"{url} failed. Missing information.")
         dic = {"date": str(datetime.date.today()), "product": product, "brand": brand, "price": price,
                "categories": categories, "unit_price": unit_price, "units": units, "discount": discount}
         return dic
