@@ -252,7 +252,7 @@ class DiaScraper:
                   encoding='utf-8') as f:
             json.dump(record, f, ensure_ascii=False)
 
-    def __parse_results(self):
+    def parse_results(self):
         out = []
         logging.info("Crawling finished. Processing tmp data.")
         for file in glob.glob(os.path.join(self.data_path, 'tmp', '*.json')):
@@ -270,7 +270,6 @@ class DiaScraper:
         Funciona principal que realiza el proceso de scraping
         :return:
         """
-        results = []
 
         self.__cargar_paginas_producto_autonomo_con_opcion(reload)
 
@@ -279,5 +278,4 @@ class DiaScraper:
             logging.info(record)
             self.__save_record(record, record["product"])
 
-        self.__parse_results()
-        return results
+        return

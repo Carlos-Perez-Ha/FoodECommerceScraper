@@ -24,6 +24,7 @@ def process_unit_price(text):
 
 
 def process_price(text):
+
     match = re.search('\\d+,\\d+', text).group().strip()
     return match.replace(",", ".")
 
