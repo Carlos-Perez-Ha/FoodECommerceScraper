@@ -24,7 +24,6 @@ def process_unit_price(text):
 
 
 def process_price(text):
-
     match = re.search('\\d+,\\d+', text).group().strip()
     return match.replace(",", ".")
 
@@ -38,9 +37,3 @@ def process_brand(text):
     text = preprocess_str(text)
     match = re.search('\\b[A-Z ]+\\b', text).group().strip()
     return match.replace(",", ".")
-
-
-class MissingInformationError(IndexError):
-    """
-    Specific error for when there is information missing in the website.
-    """
