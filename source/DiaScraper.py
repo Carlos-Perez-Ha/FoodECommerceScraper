@@ -8,6 +8,7 @@ import hashlib
 import glob
 import shutil
 import time
+import sys
 
 
 class DiaScraper:
@@ -20,13 +21,18 @@ class DiaScraper:
     URLCompreOnline = 'https://www.dia.es/compra-online/'
 
     PRODUCTS_CSV_FILE = "products_list.csv"
+    LOG_FILE = os.path.join('..', 'logs', 'logs.log')
 
     HEADERS = {
         "User-Agent": 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
                       'Chrome/107.0.0.0 Safari/537.36 '
     }
 
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s",
+                        handlers=[
+                            logging.FileHandler(LOG_FILE),
+                            logging.StreamHandler(sys.stdout)
+                        ])
 
     def __init__(self):
 
@@ -73,35 +79,52 @@ class DiaScraper:
     @staticmethod
     def __obtain_name(page: bs4.BeautifulSoup) -> Tuple[str, str]:
         fetched_product = page.find_all("div", "product-name container-center")
-        product_name = [preprocess_str(product.text) for product in fetched_product][0]
-        brand = [process_brand(product.text) for product in fetched_product][0]
+        try:
+            product_name = [preprocess_str(product.text) for product in fetched_product][0]
+            brand = [process_brand(product.text) for product in fetched_product][0]
+        except (IndexError, AttributeError):
+            logging.warning('Product name not found')
+            product_name = None
+            brand = None
         return product_name, brand
 
     @staticmethod
     def __obtain_price(page: bs4.BeautifulSoup) -> float:
-        fetched_price = page.find_all("span", "big-price")
-        price = [process_price(price.text) for price in fetched_price][0]
-        return float(price)
+        try:
+            fetched_price = page.find_all("span", "big-price")
+            price = float([process_price(price.text) for price in fetched_price][0])
+        except (IndexError, AttributeError):
+            logging.warning('Product price not found')
+            price = None
+        return price
 
     @staticmethod
     def __obtain_categories(page: bs4.BeautifulSoup) -> List[str]:
         fetched_categories = page.find_all("span", itemprop="name")
-        categories = [preprocess_str(category.text) for category in fetched_categories]
+        try:
+            categories = [preprocess_str(category.text) for category in fetched_categories]
+        except AttributeError:
+            categories = None
         return categories
 
     @staticmethod
     def __obtain_price_per_unit(page: bs4.BeautifulSoup) -> Tuple[float, str]:
         fetched_unit_prices = page.find_all("span", "average-price")
-        price = [process_price(unit_price.text) for unit_price in fetched_unit_prices][0]
-        units = [process_unit_price(unit_price.text) for unit_price in fetched_unit_prices][0]
-        return float(price), units
+        try:
+            price = float([process_price(unit_price.text) for unit_price in fetched_unit_prices][0])
+            units = [process_unit_price(unit_price.text) for unit_price in fetched_unit_prices][0]
+        except (IndexError, AttributeError):
+            logging.warning('Unit price not found')
+            price = None
+            units = None
+        return price, units
 
     @staticmethod
     def __obtain_discount(page: bs4.BeautifulSoup) -> str:
         try:
             fetched_discount = page.find_all("span", "product_details_promotion_description")
             discount_percentage = [process_discount(discount.text) for discount in fetched_discount][0]
-        except Exception:
+        except (IndexError, AttributeError):
             discount_percentage = None
         return discount_percentage
 
@@ -163,7 +186,7 @@ class DiaScraper:
             # self.__print_page(pagina_categoria, pagina_categoria.title.string.strip()+".html")
 
             # Obtengo las paginas de productos de la categoria
-            pagination = self.__obtein_pagination(pagina_categoria, url_catetoria)
+            pagination = self.__obtain_pagination(pagina_categoria, url_catetoria)
 
             # Para cada pagina de producto
             for products_page in pagination:
@@ -179,7 +202,6 @@ class DiaScraper:
 
                 # Recorro todos los tags de enlace a Producto
                 for producto_tag in product_main_link_tags:
-
                     url_producto = producto_tag["href"]
 
                     self.listaPaginasProducto.append(self.URLSite + url_producto)
@@ -188,7 +210,7 @@ class DiaScraper:
         self.__write_products_to_csv()
 
     @staticmethod
-    def __obtein_pagination(category_page: bs4.BeautifulSoup, categoria_url: str) -> List[str]:
+    def __obtain_pagination(category_page: bs4.BeautifulSoup, categoria_url: str) -> List[str]:
         """
         Devuelve todas las urls de las paginas de la categoria, segun la peginación que encuentre.
         Busca la etiqueta "scan" que contiene el numero máximo de páginas y construye todas
@@ -230,6 +252,8 @@ class DiaScraper:
         unit_price, units = self.__obtain_price_per_unit(page)
         categories = self.__obtain_categories(page)
         discount = self.__obtain_discount(page)
+        if any([price is None, product is None, brand is None, unit_price is None, units is None]):
+            logging.warning(f"{url} failed. Missing information.")
         dic = {"date": str(datetime.date.today()), "product": product, "brand": brand, "price": price,
                "categories": categories, "unit_price": unit_price, "units": units, "discount": discount}
         return dic
@@ -239,7 +263,7 @@ class DiaScraper:
                   encoding='utf-8') as f:
             json.dump(record, f, ensure_ascii=False)
 
-    def __parse_results(self):
+    def parse_results(self):
         out = []
         logging.info("Crawling finished. Processing tmp data.")
         for file in glob.glob(os.path.join(self.data_path, 'tmp', '*.json')):
@@ -257,22 +281,12 @@ class DiaScraper:
         Funciona principal que realiza el proceso de scraping
         :return:
         """
-        results = []
 
         self.__cargar_paginas_producto_autonomo_con_opcion(reload)
 
         for product_url in self.listaPaginasProducto:
-            # TODO: Manage exceptions. Errors should not affect any more field than the one that fails.
-            # Poner sleep en ejecuciones reales para evitar bloqueos y saturaciones del servidor.
-            # time.sleep(1) <-- hecho en get_page
-            try:
-                record = self.__get_info_from_url(product_url)
-                self.__save_record(record, record["product"])
-                logging.info(record)
-            except Exception as e:
-                logging.warning(f"{product_url} failed. No information retrieved.")  # , e)
-                logging.info(e)
+            record = self.__get_info_from_url(product_url)
+            logging.info(record)
+            self.__save_record(record, record["product"])
 
-        self.__parse_results()
-        return results
-
+        return
