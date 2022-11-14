@@ -82,7 +82,7 @@ class DiaScraper:
         try:
             product_name = [preprocess_str(product.text) for product in fetched_product][0]
             brand = [process_brand(product.text) for product in fetched_product][0]
-        except IndexError:
+        except (IndexError, AttributeError):
             logging.warning('Product name not found')
             product_name = None
             brand = None
@@ -92,36 +92,39 @@ class DiaScraper:
     def __obtain_price(page: bs4.BeautifulSoup) -> float:
         try:
             fetched_price = page.find_all("span", "big-price")
-            price = [process_price(price.text) for price in fetched_price][0]
-        except IndexError:
+            price = float([process_price(price.text) for price in fetched_price][0])
+        except (IndexError, AttributeError):
             logging.warning('Product price not found')
             price = None
-        return float(price)
+        return price
 
     @staticmethod
     def __obtain_categories(page: bs4.BeautifulSoup) -> List[str]:
         fetched_categories = page.find_all("span", itemprop="name")
-        categories = [preprocess_str(category.text) for category in fetched_categories]
+        try:
+            categories = [preprocess_str(category.text) for category in fetched_categories]
+        except AttributeError:
+            categories = None
         return categories
 
     @staticmethod
     def __obtain_price_per_unit(page: bs4.BeautifulSoup) -> Tuple[float, str]:
         fetched_unit_prices = page.find_all("span", "average-price")
         try:
-            price = [process_price(unit_price.text) for unit_price in fetched_unit_prices][0]
+            price = float([process_price(unit_price.text) for unit_price in fetched_unit_prices][0])
             units = [process_unit_price(unit_price.text) for unit_price in fetched_unit_prices][0]
-        except IndexError:
+        except (IndexError, AttributeError):
             logging.warning('Unit price not found')
             price = None
             units = None
-        return float(price), units
+        return price, units
 
     @staticmethod
     def __obtain_discount(page: bs4.BeautifulSoup) -> str:
         try:
             fetched_discount = page.find_all("span", "product_details_promotion_description")
             discount_percentage = [process_discount(discount.text) for discount in fetched_discount][0]
-        except IndexError:
+        except (IndexError, AttributeError):
             discount_percentage = None
         return discount_percentage
 
