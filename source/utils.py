@@ -11,9 +11,6 @@ def create_data_folder():
     return data_path
 
 
-
-
-
 def preprocess_str(text):
     rm_chars = ["\r", "\n", "\t"]
     for char in rm_chars:
@@ -22,20 +19,27 @@ def preprocess_str(text):
 
 
 def process_unit_price(text):
-    match = re.search('\\€.+$', text)
-    return text[match.start(): match.end()]
+    match = re.search('\\€.+$', text).group().strip()
+    return match
 
 
 def process_price(text):
-    match = re.search('\\d+,\\d+', text)
-    return text[match.start(): match.end()].replace(",", ".")
+    match = re.search('\\d+,\\d+', text).group().strip()
+    return match.replace(",", ".")
+
 
 def process_discount(text):
-    match = re.search('\\b\\d+\\%', text)
-    return text[match.start(): match.end()].replace(",", ".")
+    match = re.search('\\b\\d+\\%', text).group().strip()
+    return match.replace(",", ".")
 
 
 def process_brand(text):
     text = preprocess_str(text)
-    match = re.search('\\b[A-Z ]+\\b', text)
-    return text[match.start(): match.end()].replace(",", ".").strip()
+    match = re.search('\\b[A-Z ]+\\b', text).group().strip()
+    return match.replace(",", ".")
+
+
+class MissingInformationError(IndexError):
+    """
+    Specific error for when there is information missing in the website.
+    """
