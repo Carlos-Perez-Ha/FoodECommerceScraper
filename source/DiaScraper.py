@@ -289,6 +289,8 @@ class DiaScraper:
         for product_url in self.listaPaginasProducto:
             record = self.__get_info_from_url(product_url)
             logging.info(record)
-            self.__save_record(record, record["product"])
-
+            try:
+                self.__save_record(record, record["product"])
+            except AttributeError:
+                logging.warning(f"{product_url} failed. No information retrieved.")
         return
