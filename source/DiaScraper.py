@@ -9,6 +9,7 @@ import glob
 import shutil
 import time
 import sys
+import pandas as pd
 
 
 class DiaScraper:
@@ -33,6 +34,9 @@ class DiaScraper:
                             logging.FileHandler(LOG_FILE),
                             logging.StreamHandler(sys.stdout)
                         ])
+    logging.info("Scrapping process started")
+    logging.info(URLSite)
+    logging.info(URLCompreOnline)
 
     def __init__(self):
 
@@ -265,7 +269,7 @@ class DiaScraper:
                   encoding='utf-8') as f:
             json.dump(record, f, ensure_ascii=False)
 
-    def parse_results(self):
+    def save_results(self):
         json_output = {"data": []}
         logging.info("Crawling finished. Processing tmp data.")
         for file in glob.glob(os.path.join(self.data_path, 'tmp', '*.json')):
@@ -276,6 +280,11 @@ class DiaScraper:
                                datetime.datetime.strftime(self.execution_datetime, '%Y%m%d_%H%M') + '_dia.json'),
                   'a+', encoding='utf-8') as outfile:
             json.dump(json_output, outfile, ensure_ascii=False)
+            pd.DataFrame(json_output["data"]) \
+                .to_csv(os.path.join(self.data_path,
+                                     datetime.datetime.strftime(self.execution_datetime,
+                                                                '%Y%m%d_%H%M') + '_dia.csv'),
+                        sep=";", encoding="utf-8")
             shutil.rmtree(os.path.join(self.data_path, 'tmp'))
 
     def start_scraping(self, reload: bool):

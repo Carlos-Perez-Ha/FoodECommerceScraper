@@ -6,7 +6,7 @@ import json
 
 def create_data_folder():
     today = str(datetime.date.today()).replace('-', '')
-    data_path = os.path.join(os.getcwd(), '..', 'data', today)
+    data_path = os.path.join(os.getcwd(), '..', 'dataset', today)
     os.makedirs(os.path.join(data_path, 'tmp'), exist_ok=True)
     return data_path
 
