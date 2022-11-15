@@ -39,6 +39,7 @@ class DiaScraper:
         # Lista de paginas de producto del site
         self.listaPaginasProducto = []
         self.data_path = create_data_folder()
+        self.execution_datetime = datetime.datetime.now()
 
     def __get_xml_page(self, url: str) -> bs4.BeautifulSoup:
         """
@@ -254,7 +255,8 @@ class DiaScraper:
         discount = self.__obtain_discount(page)
         if any([price is None, product is None, brand is None, unit_price is None, units is None]):
             logging.warning(f"{url} failed. Missing information.")
-        dic = {"date": str(datetime.date.today()), "product": product, "brand": brand, "price": price,
+        dic = {"date": datetime.datetime.strftime(self.execution_datetime, '%Y-%m-%d'), "product": product,
+               "brand": brand, "price": price,
                "categories": categories, "unit_price": unit_price, "units": units, "discount": discount}
         return dic
 
@@ -264,16 +266,16 @@ class DiaScraper:
             json.dump(record, f, ensure_ascii=False)
 
     def parse_results(self):
-        out = []
+        json_output = {"data": []}
         logging.info("Crawling finished. Processing tmp data.")
         for file in glob.glob(os.path.join(self.data_path, 'tmp', '*.json')):
             with open(file, 'r+', encoding='utf-8') as f:
                 record = json.loads(f.read())
-                out.append(record)
+                json_output["data"].append(record)
         with open(os.path.join(self.data_path,
-                               datetime.datetime.strftime(datetime.datetime.now(), '%Y%m%d_%H%M') + '_dia.json'),
+                               datetime.datetime.strftime(self.execution_datetime, '%Y%m%d_%H%M') + '_dia.json'),
                   'a+', encoding='utf-8') as outfile:
-            json.dump(out, outfile, ensure_ascii=False)
+            json.dump(json_output, outfile, ensure_ascii=False)
             shutil.rmtree(os.path.join(self.data_path, 'tmp'))
 
     def start_scraping(self, reload: bool):
