@@ -287,9 +287,13 @@ class DiaScraper:
                         sep=";", encoding="utf-8")
             shutil.rmtree(os.path.join(self.data_path, 'tmp'))
 
-    def start_scraping(self, reload: bool):
+    def start_scraping(self, reload: bool = False):
         """
-        Funciona principal que realiza el proceso de scraping
+        Funciona principal que realiza el proceso de scraping. En funcion del parámetro reload
+        se recarga de nuevo la lista de urls de productos a partir del site de DIA o se utiliza
+        la caché de fichero.
+
+        :param reload: True si se recarga la caché o False si se utiliza la actual.
         :return:
         """
 
