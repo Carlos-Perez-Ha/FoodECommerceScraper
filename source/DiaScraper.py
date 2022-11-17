@@ -34,9 +34,6 @@ class DiaScraper:
                             logging.FileHandler(LOG_FILE),
                             logging.StreamHandler(sys.stdout)
                         ])
-    logging.info("Scrapping process started")
-    logging.info(URLSite)
-    logging.info(URLCompreOnline)
 
     def __init__(self):
 
