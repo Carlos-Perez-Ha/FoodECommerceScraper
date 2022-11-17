@@ -10,6 +10,10 @@ if __name__ == '__main__':
         reload = False
 
     diaScraping = DiaScraper()
+
+    logging.info("Scrapping process started")
+    logging.info(diaScraping.URLSite)
+    logging.info(diaScraping.URLCompreOnline)
     diaScraping.start_scraping(reload)
     diaScraping.save_results()
     logging.info("Process finished.")
