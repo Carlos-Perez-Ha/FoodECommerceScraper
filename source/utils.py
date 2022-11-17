@@ -1,7 +1,6 @@
 import re
 import datetime
 import os
-import json
 
 
 def create_data_folder():
@@ -11,29 +10,29 @@ def create_data_folder():
     return data_path
 
 
-def preprocess_str(text):
+def preprocess_str(text: str) -> str:
     rm_chars = ["\r", "\n", "\t"]
     for char in rm_chars:
         text = text.replace(char, "")
     return text.replace(",", ".").strip()
 
 
-def process_unit_price(text):
+def process_unit_price(text: str) -> str:
     match = re.search('\\€.+$', text).group().strip()
     return match
 
 
-def process_price(text):
+def process_price(text: str) -> str:
     match = re.search('\\d+,\\d+', text).group().strip()
     return match.replace(",", ".")
 
 
-def process_discount(text):
+def process_discount(text: str) -> str:
     match = re.search('\\b\\d+\\%', text).group().strip()
     return match.replace(",", ".")
 
 
-def process_brand(text):
+def process_brand(text: str) -> str:
     text = preprocess_str(text)
-    match = re.search('\\b[A-Z ]+\\b', text).group().strip()
+    match = re.search('\\b[A-ZÑÀ-Ö ]+\\b', text).group().strip()
     return match.replace(",", ".")
