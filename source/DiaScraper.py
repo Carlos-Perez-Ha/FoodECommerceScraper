@@ -10,6 +10,7 @@ import shutil
 import time
 import sys
 import pandas as pd
+import json
 
 
 class DiaScraper:
@@ -248,15 +249,17 @@ class DiaScraper:
 
     def __get_info_from_url(self, url: str) -> dict:
         page = self.__get_html_page(url)
+        product_id = url.split('/')[-1]
         price = self.__obtain_price(page)
         product, brand = self.__obtain_name(page)
         unit_price, units = self.__obtain_price_per_unit(page)
         categories = self.__obtain_categories(page)
         discount = self.__obtain_discount(page)
+
         if any([price is None, product is None, brand is None, unit_price is None, units is None]):
             logging.warning(f"{url} failed. Missing information.")
         dic = {"date": datetime.datetime.strftime(self.execution_datetime, '%Y-%m-%d'), "product": product,
-               "brand": brand, "price": price,
+               "product_id": product_id, "brand": brand, "price": price,
                "categories": categories, "unit_price": unit_price, "units": units, "discount": discount}
         return dic
 
@@ -264,6 +267,18 @@ class DiaScraper:
         with open(os.path.join(self.data_path, 'tmp', hashlib.md5(filename.encode()).hexdigest() + '.json'), 'w+',
                   encoding='utf-8') as f:
             json.dump(record, f, ensure_ascii=False)
+
+    def generate_dataset(self):
+        try:
+            dataset = pd.read_csv(os.path.join(self.data_path, '..', 'dataset.csv'), sep=";", encoding="utf-8")
+        except FileNotFoundError:
+            dataset = pd.DataFrame()
+
+        for result in glob.glob(os.path.join(self.data_path, '../*/*.csv')):
+            data = pd.read_csv(result, sep=";", encoding="utf-8")
+            dataset = pd.concat([dataset, data])
+        dataset.drop_duplicates(inplace=True)
+        dataset.to_csv(os.path.join(self.data_path, '..', 'dataset.csv'), sep=";", encoding="utf-8", index=False)
 
     def save_results(self):
         json_output = {"data": []}
@@ -280,7 +295,7 @@ class DiaScraper:
                 .to_csv(os.path.join(self.data_path,
                                      datetime.datetime.strftime(self.execution_datetime,
                                                                 '%Y%m%d_%H%M') + '_dia.csv'),
-                        sep=";", encoding="utf-8")
+                        sep=";", encoding="utf-8", index=False)
             shutil.rmtree(os.path.join(self.data_path, 'tmp'))
 
     def start_scraping(self, reload: bool = False):

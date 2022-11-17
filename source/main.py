@@ -16,4 +16,5 @@ if __name__ == '__main__':
     logging.info(diaScraping.URLCompreOnline)
     diaScraping.start_scraping(reload)
     diaScraping.save_results()
+    diaScraping.generate_dataset()
     logging.info("Process finished.")
