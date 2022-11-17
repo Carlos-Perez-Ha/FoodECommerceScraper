@@ -1,25 +1,51 @@
-# Scraping Mercadona Site
+# Scraping Dia eCommerce Site
 
-**URL: https://tienda.mercadona.es/**
+**URL: https://www.dia.es/compra-online/**
 
 ## Robots.txt
 
-    User-agent: *
-    Allow: /$
-    Allow: /sitemap.xml
-    Allow: /product
-    Disallow: /
-    Disallow: /api
-    Disallow: /legal
-    Sitemap: https://tienda.mercadona.es/sitemap.xml
+        # For all robots
+        User-agent: *
+        
+        # Block access to specific groups of pages
+        Disallow: /compra-online/cart
+        Disallow: /compra-online/checkout
+        Disallow: /compra-online/my-account
+        Disallow: /compra-online/*/reviewhtml/
+        Disallow: /compra-online/ca/*
+        Disallow: /compra-online/en/*
+        Disallow: /compra-online/products/
+        Disallow: /compra-online/productes/
+        Disallow: /compra-online/prueba-compra-online
+        
+        # Allow search crawlers to discover the sitemap
+        Sitemap: /compra-online/sitemap.xml
+        
+        
+        # Block CazoodleBot as it does not present correct accept content headers
+        User-agent: CazoodleBot
+        Disallow: /
+        
+        # Block MJ12bot as it is just noise
+        User-agent: MJ12bot
+        Disallow: /
+        
+        # Block dotbot as it cannot parse base urls properly
+        User-agent: dotbot/1.0
+        Disallow: /
+        
+        # Block Gigabot
+        User-agent: Gigabot
+        Disallow: /
 
-Se permite la consulta de las páginas de productos
+Se permite la consulta de las páginas de productos, que siguen este formato:
+https://www.dia.es/compra-online/dulces-de-navidad/surtidos-navidenos/p/125266
 
 ## Sitemap y Tamaño
 
-Sitemap: https://tienda.mercadona.es/sitemap.xml
+Sitemap: https://www.dia.es/compra-online/sitemap.xml
 
-5379 URLs de producto.
+26880 URLs de producto.
 
 ## Tecnología
 
