@@ -249,7 +249,7 @@ class DiaScraper:
 
     def __get_info_from_url(self, url: str) -> dict:
         page = self.__get_html_page(url)
-        product_id = url.split('/')[-1]
+        product_id = int(url.split('/')[-1])
         price = self.__obtain_price(page)
         product, brand = self.__obtain_name(page)
         unit_price, units = self.__obtain_price_per_unit(page)
@@ -311,6 +311,7 @@ class DiaScraper:
         self.__cargar_paginas_producto_autonomo_con_opcion(reload)
 
         for product_url in self.listaPaginasProducto:
+            logging.info(f"crawling {product_url}")
             record = self.__get_info_from_url(product_url)
             logging.info(record)
             try:
