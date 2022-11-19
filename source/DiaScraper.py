@@ -310,7 +310,7 @@ class DiaScraper:
 
         self.__cargar_paginas_producto_autonomo_con_opcion(reload)
 
-        logging.info("Mumber of products to scan: " + str(len(self.listaPaginasProducto)))
+        logging.info("Number of products to scan: " + str(len(self.listaPaginasProducto)))
 
         product_number = 0
 
