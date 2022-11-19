@@ -50,8 +50,6 @@ class DiaScraper:
         """
 
         session = requests.Session()
-        # Se simula navegacion humana, con retraso de 1 segundo entre llamadas
-        time.sleep(1)
         page = session.get(url, headers=self.HEADERS)
         soup = BeautifulSoup(page.content, features='xml')
 
@@ -64,9 +62,11 @@ class DiaScraper:
         """
 
         session = requests.Session()
-        # Se simula navegacion humana, con retraso de 1 segundo entre llamadas
-        time.sleep(1)
+        # Se simula navegacion humana, con retraso de 10x el tiempo del request.
+        t0 = time.time()
         page = session.get(url, headers=self.HEADERS)
+        delay = time.time() - t0
+        time.sleep(10 * delay)
         soup = BeautifulSoup(page.content, features='html.parser')
 
         return soup
@@ -312,15 +312,11 @@ class DiaScraper:
 
         logging.info("Number of products to scan: " + str(len(self.listaPaginasProducto)))
 
-        product_number = 0
-
-        for product_url in self.listaPaginasProducto:
-
-            product_number += 1
+        for product_number, product_url in enumerate(self.listaPaginasProducto):
 
             logging.info(f"Crawling {product_url}")
             record = self.__get_info_from_url(product_url)
-            logging.info(f"Scanned: {product_number} - product_id: {record['product_id']}")
+            logging.info(f"Scanned: {product_number + 1} - product_id: {record['product_id']}")
             try:
                 self.__save_record(record, record["product"])
             except AttributeError:
