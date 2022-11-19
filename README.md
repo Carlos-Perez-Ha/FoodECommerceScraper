@@ -13,7 +13,7 @@ order uses.
 
 Navigate source directory and Run:
 
-    python -m main <reload>
+    python -m main --reload_urls <reload>
 
 To run start scraping. The process is divided in two steps:
 
