@@ -154,7 +154,7 @@ class DiaScraper:
         """
 
         if reload:
-            logging.info("Recargado URLs de productos...")
+            logging.info("Recargando URLs de productos...")
             self.__cargar_paginas_producto_autonomo()
 
         self.__read_products_from_csv()
@@ -249,7 +249,7 @@ class DiaScraper:
 
     def __get_info_from_url(self, url: str) -> dict:
         page = self.__get_html_page(url)
-        product_id = int(url.split('/')[-1])
+        product_id = url.split('/')[-1]
         price = self.__obtain_price(page)
         product, brand = self.__obtain_name(page)
         unit_price, units = self.__obtain_price_per_unit(page)
@@ -268,19 +268,7 @@ class DiaScraper:
                   encoding='utf-8') as f:
             json.dump(record, f, ensure_ascii=False)
 
-    def generate_dataset(self):
-        try:
-            dataset = pd.read_csv(os.path.join(self.data_path, '..', 'dataset.csv'), sep=";", encoding="utf-8")
-        except FileNotFoundError:
-            dataset = pd.DataFrame()
-
-        for result in glob.glob(os.path.join(self.data_path, '../*/*.csv')):
-            data = pd.read_csv(result, sep=";", encoding="utf-8")
-            dataset = pd.concat([dataset, data])
-        dataset.drop_duplicates(inplace=True)
-        dataset.to_csv(os.path.join(self.data_path, '..', 'dataset.csv'), sep=";", encoding="utf-8", index=False)
-
-    def save_results(self):
+    def __save_results(self):
         json_output = {"data": []}
         logging.info("Crawling finished. Processing tmp data.")
         for file in glob.glob(os.path.join(self.data_path, 'tmp', '*.json')):
@@ -297,6 +285,18 @@ class DiaScraper:
                                                                 '%Y%m%d_%H%M') + '_dia.csv'),
                         sep=";", encoding="utf-8", index=False)
             shutil.rmtree(os.path.join(self.data_path, 'tmp'))
+
+    def generate_dataset(self):
+        try:
+            dataset = pd.read_csv(os.path.join(self.data_path, '..', 'dataset.csv'), sep=";", encoding="utf-8")
+        except FileNotFoundError:
+            dataset = pd.DataFrame()
+
+        for result in glob.glob(os.path.join(self.data_path, '../*/*.csv')):
+            data = pd.read_csv(result, sep=";", encoding="utf-8")
+            dataset = pd.concat([dataset, data])
+        dataset.drop_duplicates(inplace=True)
+        dataset.to_csv(os.path.join(self.data_path, '..', 'dataset.csv'), sep=";", encoding="utf-8", index=False)
 
     def start_scraping(self, reload: bool = False):
         """
@@ -318,11 +318,12 @@ class DiaScraper:
 
             product_number += 1
 
-            logging.info(f"crawling {product_url}")
+            logging.info(f"Crawling {product_url}")
             record = self.__get_info_from_url(product_url)
-            logging.info("Scan: "+str(product_number)+" - product_id: "+record["product_id"])
+            logging.info(f"Scanned: {product_number} - product_id: {record['product_id']}")
             try:
                 self.__save_record(record, record["product"])
             except AttributeError:
                 logging.warning(f"{product_url} failed. No information retrieved.")
+        self.__save_results()
         return
