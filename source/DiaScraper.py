@@ -310,10 +310,17 @@ class DiaScraper:
 
         self.__cargar_paginas_producto_autonomo_con_opcion(reload)
 
+        logging.info("Number of products to scan: " + str(len(self.listaPaginasProducto)))
+
+        product_number = 0
+
         for product_url in self.listaPaginasProducto:
+
+            product_number += 1
+
             logging.info(f"crawling {product_url}")
             record = self.__get_info_from_url(product_url)
-            logging.info(record)
+            logging.info("Scan: "+str(product_number)+" - product_id: "+record["product_id"])
             try:
                 self.__save_record(record, record["product"])
             except AttributeError:

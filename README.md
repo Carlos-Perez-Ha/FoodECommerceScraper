@@ -11,7 +11,7 @@ order uses.
 
 ## Usage
 
-Run
+Navigate source directory and Run:
 
     python -m main <reload>
 
