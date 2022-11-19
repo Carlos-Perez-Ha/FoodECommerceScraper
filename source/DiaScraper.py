@@ -316,7 +316,7 @@ class DiaScraper:
 
         for product_url in self.listaPaginasProducto:
 
-            productMumber_number += 1
+            product_number += 1
 
             record = self.__get_info_from_url(product_url)
             logging.info("Scan: "+str(product_number)+" - product_id: "+record["product_id"])
