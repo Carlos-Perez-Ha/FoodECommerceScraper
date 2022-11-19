@@ -50,8 +50,6 @@ class DiaScraper:
         """
 
         session = requests.Session()
-        # Se simula navegacion humana, con retraso de 1 segundo entre llamadas
-        time.sleep(1)
         page = session.get(url, headers=self.HEADERS)
         soup = BeautifulSoup(page.content, features='xml')
 
@@ -64,9 +62,11 @@ class DiaScraper:
         """
 
         session = requests.Session()
-        # Se simula navegacion humana, con retraso de 1 segundo entre llamadas
-        time.sleep(1)
+        # Se simula navegacion humana, con retraso de 10x el tiempo del request.
+        t0 = time.time()
         page = session.get(url, headers=self.HEADERS)
+        delay = time.time() - t0
+        time.sleep(10 * delay)
         soup = BeautifulSoup(page.content, features='html.parser')
 
         return soup
@@ -154,7 +154,7 @@ class DiaScraper:
         """
 
         if reload:
-            logging.info("Recargado URLs de productos...")
+            logging.info("Recargando URLs de productos...")
             self.__cargar_paginas_producto_autonomo()
 
         self.__read_products_from_csv()
@@ -268,19 +268,7 @@ class DiaScraper:
                   encoding='utf-8') as f:
             json.dump(record, f, ensure_ascii=False)
 
-    def generate_dataset(self):
-        try:
-            dataset = pd.read_csv(os.path.join(self.data_path, '..', 'dataset.csv'), sep=";", encoding="utf-8")
-        except FileNotFoundError:
-            dataset = pd.DataFrame()
-
-        for result in glob.glob(os.path.join(self.data_path, '../*/*.csv')):
-            data = pd.read_csv(result, sep=";", encoding="utf-8")
-            dataset = pd.concat([dataset, data])
-        dataset.drop_duplicates(inplace=True)
-        dataset.to_csv(os.path.join(self.data_path, '..', 'dataset.csv'), sep=";", encoding="utf-8", index=False)
-
-    def save_results(self):
+    def __save_results(self):
         json_output = {"data": []}
         logging.info("Crawling finished. Processing tmp data.")
         for file in glob.glob(os.path.join(self.data_path, 'tmp', '*.json')):
@@ -298,6 +286,18 @@ class DiaScraper:
                         sep=";", encoding="utf-8", index=False)
             shutil.rmtree(os.path.join(self.data_path, 'tmp'))
 
+    def generate_dataset(self):
+        try:
+            dataset = pd.read_csv(os.path.join(self.data_path, '..', 'dataset.csv'), sep=";", encoding="utf-8")
+        except FileNotFoundError:
+            dataset = pd.DataFrame()
+
+        for result in glob.glob(os.path.join(self.data_path, '../*/*.csv')):
+            data = pd.read_csv(result, sep=";", encoding="utf-8")
+            dataset = pd.concat([dataset, data])
+        dataset.drop_duplicates(inplace=True)
+        dataset.to_csv(os.path.join(self.data_path, '..', 'dataset.csv'), sep=";", encoding="utf-8", index=False)
+
     def start_scraping(self, reload: bool = False):
         """
         Funciona principal que realiza el proceso de scraping. En funcion del parámetro reload
@@ -312,16 +312,14 @@ class DiaScraper:
 
         logging.info("Number of products to scan: " + str(len(self.listaPaginasProducto)))
 
-        product_number = 0
+        for product_number, product_url in enumerate(self.listaPaginasProducto):
 
-        for product_url in self.listaPaginasProducto:
-
-            product_number += 1
-
+            logging.info(f"Crawling {product_url}")
             record = self.__get_info_from_url(product_url)
-            logging.info("Scan: "+str(product_number)+" - product_id: "+record["product_id"])
+            logging.info(f"Scanned: {product_number + 1} - product_id: {record['product_id']}")
             try:
                 self.__save_record(record, record["product"])
             except AttributeError:
                 logging.warning(f"{product_url} failed. No information retrieved.")
+        self.__save_results()
         return
