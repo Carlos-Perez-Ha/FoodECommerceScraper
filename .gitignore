@@ -12,4 +12,6 @@ logs
 # datafiles
 dataset
 
+# Virtual env
+venv
 
