@@ -164,9 +164,9 @@ class DiaScraper:
             for url in f:
                 self.listaPaginasProducto.append(url.strip())
 
-    def __write_products_to_csv(self):
+    def __write_products_to_csv(self, product_list: list):
         with open(self.PRODUCTS_CSV_FILE, "w") as f:
-            for url in self.listaPaginasProducto:
+            for url in product_list:
                 f.write(url + "\n")
 
     def __cargar_paginas_producto_autonomo(self):
@@ -179,6 +179,8 @@ class DiaScraper:
 
         # Busco todos los tags que hacen referencia a categorías de producto
         categories_list_tags = home.find_all("a", class_="go-to-category")
+
+        lista_paginas_producto = []
 
         # Recorro todas las categorias de productos
         for categoria_tag in categories_list_tags:
@@ -206,10 +208,10 @@ class DiaScraper:
                 for producto_tag in product_main_link_tags:
                     url_producto = producto_tag["href"]
 
-                    self.listaPaginasProducto.append(self.URLSite + url_producto)
+                    lista_paginas_producto.append(self.URLSite + url_producto)
 
         # Guardamos los productos en fichero para caché
-        self.__write_products_to_csv()
+        self.__write_products_to_csv(lista_paginas_producto)
 
     @staticmethod
     def __obtain_pagination(category_page: bs4.BeautifulSoup, categoria_url: str) -> List[str]:
