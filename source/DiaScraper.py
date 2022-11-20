@@ -289,17 +289,15 @@ class DiaScraper:
             with open(file, 'r+', encoding='utf-8') as f:
                 record = json.loads(f.read())
                 json_output["data"].append(record)
+
         # guardamos la lista total en csv.
-        with open(os.path.join(self.data_path,
-                               datetime.datetime.strftime(self.execution_datetime, '%Y%m%d_%H%M') + '_dia.json'),
-                  'a+', encoding='utf-8') as outfile:
-            pd.DataFrame(json_output["data"]) \
-                .to_csv(os.path.join(self.data_path,
-                                     datetime.datetime.strftime(self.execution_datetime,
-                                                                '%Y%m%d_%H%M') + '_dia.csv'),
-                        sep=";", encoding="utf-8", index=False)
-            # eliminamos el directorio tmp
-            shutil.rmtree(os.path.join(self.data_path, 'tmp'))
+        pd.DataFrame(json_output["data"]) \
+            .to_csv(os.path.join(self.data_path,
+                                 datetime.datetime.strftime(self.execution_datetime,
+                                                            '%Y%m%d_%H%M') + '_dia.csv'),
+                    sep=";", encoding="utf-8", index=False)
+        # eliminamos el directorio tmp
+        shutil.rmtree(os.path.join(self.data_path, 'tmp'))
 
     def generate_dataset(self):
         """
@@ -307,12 +305,14 @@ class DiaScraper:
         """
         try:
             dataset = pd.read_csv(os.path.join(self.data_path, '..', 'dataset.csv'), sep=";", encoding="utf-8")
-        except FileNotFoundError:
+        # si no existe o no contiene datos, generamos un nuevo dataset
+        except (FileNotFoundError, pd.errors.EmptyDataError):
             dataset = pd.DataFrame()
-
+        # para cada csv que encuentra de ejecuciones pasadas lo concatena al archivo dataset
         for result in glob.glob(os.path.join(self.data_path, '../*/*.csv')):
             data = pd.read_csv(result, sep=";", encoding="utf-8")
             dataset = pd.concat([dataset, data])
+        # eliminamos duplicados
         dataset.drop_duplicates(inplace=True)
         dataset.to_csv(os.path.join(self.data_path, '..', 'dataset.csv'), sep=";", encoding="utf-8", index=False)
 
