@@ -22,7 +22,7 @@ order uses.
 
 ## Usage
 
-Navigate source directory and Run:
+Recommended version is Python 3.8. Navigate source directory and Run:
 
     python -m main --reload_urls <reload>
 
@@ -39,7 +39,7 @@ or to scrape the products list file again from the online site. Can be ```False`
 
 Because of copyright issues, we connot share the final dataset. 
 
-This is a simulated published dataset: **ZENODO** Doi URL: https://doi.org/10.5281/zenodo.7334808
+This is a simulated published dataset: **ZENODO** Doi URL: 
 
 
-
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.7334808.svg)](https://doi.org/10.5281/zenodo.7334808)
