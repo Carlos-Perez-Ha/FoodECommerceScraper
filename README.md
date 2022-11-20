@@ -18,6 +18,7 @@ order uses.
 - analysis.md : initial scraping analysis.
 - sitemap.xml : sitemap file.
 - requirements.txt : python libs.
+- memoria.pdf: meoria del trabajo realizado.
 
 ## Usage
 
