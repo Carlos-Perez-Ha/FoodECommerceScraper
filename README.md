@@ -1,13 +1,24 @@
 # FoodECommerceScraper
+
 Repo for scraping food prices from eCommerce (Supermarket) in order to check inflation and
 order uses.
 
+## Authors:
+
+- Oscar Promio opromio@uoc.edu
+- Carlos Perez cperezha@uoc.edu
+
+## Files
+
 - /source : source code directory
-  - requirements.txt : python libs
-  - main.py : executable module
+  - main.py : executable module.
+  - DiaScraper.py: Scraper code.
+  - Utils.py: utilities library.
   - products_list.csv: cache file. Can be edited for debugging purposes. See "Usage" section.
-- analysis.md : initial scraping analysis
-- sitemap.xml : sitemap file
+- analysis.md : initial scraping analysis.
+- sitemap.xml : sitemap file.
+- requirements.txt : python libs.
+- memoria.pdf: memoria del trabajo realizado.
 
 ## Usage
 
@@ -24,7 +35,11 @@ To run start scraping. The process is divided in two steps:
 or to scrape the products list file again from the online site. Can be ```False``` for using chached file or 
 ```True``` to reload the list.
 
+## Dataset
 
+Because of copyright issues, we connot share the final dataset. 
+
+This is a simulated published dataset: **ZENODO** Doi URL: https://doi.org/10.5281/zenodo.7334808
 
 
 
