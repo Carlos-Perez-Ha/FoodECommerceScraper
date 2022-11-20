@@ -250,6 +250,10 @@ class DiaScraper:
         return lista_paginas
 
     def __get_info_from_url(self, url: str) -> dict:
+        """
+        param url: url address to scrap
+        return: dic with scrapped information.
+        """
         page = self.__get_html_page(url)
         product_id = url.split('/')[-1]
         price = self.__obtain_price(page)
@@ -257,38 +261,50 @@ class DiaScraper:
         unit_price, units = self.__obtain_price_per_unit(page)
         categories = self.__obtain_categories(page)
         discount = self.__obtain_discount(page)
-
+        # comprobamos si hay informacion missing.
         if any([price is None, product is None, brand is None, unit_price is None, units is None]):
             logging.warning(f"{url} failed. Missing information.")
+        # guardamos la informacion en un diccionario.
         dic = {"date": datetime.datetime.strftime(self.execution_datetime, '%Y-%m-%d'), "product": product,
                "product_id": product_id, "brand": brand, "price": price,
                "categories": categories, "unit_price": unit_price, "units": units, "discount": discount}
         return dic
 
     def __save_record(self, record: dict, filename: str):
+        """
+        saves scrapped information in temp folder.
+        """
         with open(os.path.join(self.data_path, 'tmp', hashlib.md5(filename.encode()).hexdigest() + '.json'), 'w+',
                   encoding='utf-8') as f:
             json.dump(record, f, ensure_ascii=False)
 
     def __save_results(self):
+        """
+        aggregates temp information in a single csv from the execution
+        """
         json_output = {"data": []}
         logging.info("Crawling finished. Processing tmp data.")
+        # para cada archivo que encontramos en la carpeta tmp lo guardamos en memoria.
         for file in glob.glob(os.path.join(self.data_path, 'tmp', '*.json')):
             with open(file, 'r+', encoding='utf-8') as f:
                 record = json.loads(f.read())
                 json_output["data"].append(record)
+        # guardamos la lista total en csv.
         with open(os.path.join(self.data_path,
                                datetime.datetime.strftime(self.execution_datetime, '%Y%m%d_%H%M') + '_dia.json'),
                   'a+', encoding='utf-8') as outfile:
-            json.dump(json_output, outfile, ensure_ascii=False)
             pd.DataFrame(json_output["data"]) \
                 .to_csv(os.path.join(self.data_path,
                                      datetime.datetime.strftime(self.execution_datetime,
                                                                 '%Y%m%d_%H%M') + '_dia.csv'),
                         sep=";", encoding="utf-8", index=False)
+            # eliminamos el directorio tmp
             shutil.rmtree(os.path.join(self.data_path, 'tmp'))
 
     def generate_dataset(self):
+        """
+        Appendds or generates the dataset.csv file with the newly scrapped information.
+        """
         try:
             dataset = pd.read_csv(os.path.join(self.data_path, '..', 'dataset.csv'), sep=";", encoding="utf-8")
         except FileNotFoundError:
