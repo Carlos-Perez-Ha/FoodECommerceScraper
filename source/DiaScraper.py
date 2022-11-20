@@ -301,7 +301,7 @@ class DiaScraper:
 
     def generate_dataset(self):
         """
-        Appendds or generates the dataset.csv file with the newly scrapped information.
+        Appends or generates the dataset.csv file with the newly scrapped information.
         """
         try:
             dataset = pd.read_csv(os.path.join(self.data_path, '..', 'dataset.csv'), sep=";", encoding="utf-8")
